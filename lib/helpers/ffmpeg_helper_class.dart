@@ -33,7 +33,7 @@ class FFMpegHelper {
       Directory tempDir = await getTemporaryDirectory();
       _tempFolderPath = path.join(tempDir.path, "ffmpeg");
       Directory ffmpegInstallDir =
-          ffmpegBaseDir ?? await getApplicationDocumentsDirectory();
+          ffmpegBaseDir ?? await getApplicationSupportDirectory();
       _ffmpegInstallationPath =
           path.join(ffmpegInstallDir.path, appName, "ffmpeg");
       _ffmpegBinDirectory = path.join(
