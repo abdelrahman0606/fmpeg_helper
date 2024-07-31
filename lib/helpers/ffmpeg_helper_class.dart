@@ -5,54 +5,61 @@ import 'dart:io';
 import 'package:archive/archive_io.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 import '../ffmpeg_helper.dart';
 
+typedef StatisticsCallback = void Function(Statistics statistics);
+typedef OnCompleteCallback = void Function(File? outputFile);
+typedef OnProgressCallback = void Function(FFMpegProgress progress);
+
+const String _ffmpegUrl =
+    "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip";
+
+/// The class that helps to interact with the FFMpeg library.
 class FFMpegHelper {
-  static final FFMpegHelper _singleton = FFMpegHelper._internal();
+  FFMpegHelper._();
+
+  /// The factory constructor of the [FFMpegHelper].
   factory FFMpegHelper() => _singleton;
-  FFMpegHelper._internal();
+
+  static final FFMpegHelper _singleton = FFMpegHelper._();
+
+  /// The singleton instance of the [FFMpegHelper].
   static FFMpegHelper get instance => _singleton;
 
-  //
-  final String _ffmpegUrl =
-      "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip";
   String? _tempFolderPath;
   String? _ffmpegBinDirectory;
   String? _ffmpegInstallationPath;
 
+  /// Initialize the FFMpeg helper.
   Future<void> initialize({
     Directory? ffmpegBaseDir,
   }) async {
     if (Platform.isWindows) {
-      PackageInfo packageInfo = await PackageInfo.fromPlatform();
-      String appName = packageInfo.appName;
-      Directory tempDir = await getTemporaryDirectory();
+      final tempDir = await getTemporaryDirectory();
       _tempFolderPath = path.join(tempDir.path, "ffmpeg");
-      Directory ffmpegInstallDir =
+      final ffmpegInstallDir =
           ffmpegBaseDir ?? await getApplicationSupportDirectory();
-      _ffmpegInstallationPath =
-          path.join(ffmpegInstallDir.path, appName, "ffmpeg");
+      _ffmpegInstallationPath = path.join(ffmpegInstallDir.path, "ffmpeg");
       _ffmpegBinDirectory = path.join(
-          _ffmpegInstallationPath!, "ffmpeg-master-latest-win64-gpl", "bin");
+        _ffmpegInstallationPath!,
+        "ffmpeg-master-latest-win64-gpl",
+        "bin",
+      );
     }
   }
 
+  /// Check if the FFMpeg library is present.
   Future<bool> isFFMpegPresent() async {
     if (Platform.isWindows) {
       if ((_ffmpegBinDirectory == null) || (_tempFolderPath == null)) {
         await initialize();
       }
-      File ffmpeg = File(path.join(_ffmpegBinDirectory!, "ffmpeg.exe"));
-      File ffprobe = File(path.join(_ffmpegBinDirectory!, "ffprobe.exe"));
-      if ((await ffmpeg.exists()) && (await ffprobe.exists())) {
-        return true;
-      } else {
-        return false;
-      }
+      final ffMpeg = File(path.join(_ffmpegBinDirectory!, "ffmpeg.exe"));
+      final ffProbe = File(path.join(_ffmpegBinDirectory!, "ffprobe.exe"));
+      return ffMpeg.existsSync() && ffProbe.existsSync();
     } else if (Platform.isLinux) {
       try {
         Process process = await Process.start(
@@ -68,6 +75,7 @@ class FFMpegHelper {
     }
   }
 
+  /// Extract the zip file to the disk.
   static Future<void> extractZipFileIsolate(Map data) async {
     try {
       String? zipFilePath = data['zipFile'];
@@ -80,10 +88,11 @@ class FFMpegHelper {
     }
   }
 
+  /// Runs [command] asynchronously.
   Future<FFMpegHelperSession> runAsync(
     FFMpegCommand command, {
-    Function(Statistics statistics)? statisticsCallback,
-    Function(File? outputFile)? onComplete,
+    StatisticsCallback? statisticsCallback,
+    OnCompleteCallback? onComplete,
   }) async {
     if (Platform.isWindows || Platform.isLinux) {
       return _runAsyncOnWindows(
@@ -102,8 +111,8 @@ class FFMpegHelper {
 
   Future<FFMpegHelperSession> _runAsyncOnWindows(
     FFMpegCommand command, {
-    Function(Statistics statistics)? statisticsCallback,
-    Function(File? outputFile)? onComplete,
+    StatisticsCallback? statisticsCallback,
+    OnCompleteCallback? onComplete,
   }) async {
     Process process = await _startWindowsProcess(
       command,
@@ -126,8 +135,8 @@ class FFMpegHelper {
 
   Future<FFMpegHelperSession> _runAsyncOnNonWindows(
     FFMpegCommand command, {
-    Function(Statistics statistics)? statisticsCallback,
-    Function(File? outputFile)? onComplete,
+    StatisticsCallback? statisticsCallback,
+    OnCompleteCallback? onComplete,
   }) async {
     FFmpegSession sess = await FFmpegKit.executeAsync(
       command.toCli().join(' '),
@@ -152,9 +161,10 @@ class FFMpegHelper {
     );
   }
 
+  /// Runs [command] synchronously.
   Future<File?> runSync(
     FFMpegCommand command, {
-    Function(Statistics statistics)? statisticsCallback,
+    StatisticsCallback? statisticsCallback,
   }) async {
     if (Platform.isWindows || Platform.isLinux) {
       return _runSyncOnWindows(
@@ -171,7 +181,7 @@ class FFMpegHelper {
 
   Future<Process> _startWindowsProcess(
     FFMpegCommand command, {
-    Function(Statistics statistics)? statisticsCallback,
+    StatisticsCallback? statisticsCallback,
   }) async {
     String ffmpeg = 'ffmpeg';
     if ((_ffmpegBinDirectory != null) && (Platform.isWindows)) {
@@ -224,7 +234,7 @@ class FFMpegHelper {
 
   Future<File?> _runSyncOnWindows(
     FFMpegCommand command, {
-    Function(Statistics statistics)? statisticsCallback,
+    StatisticsCallback? statisticsCallback,
   }) async {
     Process process = await _startWindowsProcess(
       command,
@@ -239,7 +249,7 @@ class FFMpegHelper {
 
   Future<File?> _runSyncOnNonWindows(
     FFMpegCommand command, {
-    Function(Statistics statistics)? statisticsCallback,
+    StatisticsCallback? statisticsCallback,
   }) async {
     Completer<File?> completer = Completer<File?>();
     await FFmpegKit.executeAsync(
@@ -264,6 +274,7 @@ class FFMpegHelper {
     return completer.future;
   }
 
+  /// Run the probe on the [filePath].
   Future<MediaInformation?> runProbe(String filePath) async {
     if (Platform.isWindows || Platform.isLinux) {
       return _runProbeOnWindows(filePath);
@@ -328,6 +339,7 @@ class FFMpegHelper {
     }
   }
 
+  /// Gets the thumbnail file from the [videoPath] asynchronously.
   Future<FFMpegHelperSession> getThumbnailFileAsync({
     required String videoPath,
     required Duration fromDuration,
@@ -335,8 +347,8 @@ class FFMpegHelper {
     String? ffmpegPath,
     FilterGraph? filterGraph,
     int qualityPercentage = 100,
-    Function(Statistics statistics)? statisticsCallback,
-    Function(File? outputFile)? onComplete,
+    StatisticsCallback? statisticsCallback,
+    OnCompleteCallback? onComplete,
   }) async {
     int quality = 1;
     if ((qualityPercentage > 0) && (qualityPercentage < 100)) {
@@ -362,6 +374,7 @@ class FFMpegHelper {
     return session;
   }
 
+  /// Gets the thumbnail file from the [videoPath] synchronously.
   Future<File?> getThumbnailFileSync({
     required String videoPath,
     required Duration fromDuration,
@@ -369,8 +382,8 @@ class FFMpegHelper {
     String? ffmpegPath,
     FilterGraph? filterGraph,
     int qualityPercentage = 100,
-    Function(Statistics statistics)? statisticsCallback,
-    Function(File? outputFile)? onComplete,
+    StatisticsCallback? statisticsCallback,
+    OnCompleteCallback? onComplete,
   }) async {
     int quality = 1;
     if ((qualityPercentage > 0) && (qualityPercentage < 100)) {
@@ -395,9 +408,10 @@ class FFMpegHelper {
     return session;
   }
 
+  /// Does setup FFMpeg library on the Windows platform only.
   Future<bool> setupFFMpegOnWindows({
     CancelToken? cancelToken,
-    void Function(FFMpegProgress progress)? onProgress,
+    OnProgressCallback? onProgress,
     Map<String, dynamic>? queryParameters,
   }) async {
     if (Platform.isWindows) {
