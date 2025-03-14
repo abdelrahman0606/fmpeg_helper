@@ -200,9 +200,9 @@ class FFMpegHelper {
             int.tryParse(temp['total_size']) ?? 0,
             // int.parse(
             //   temp['out_time_us'].toString(),
-            double.parse(
+            num.parse(
               temp['out_time_us'].toString(),
-            ), // 2189.6kbits/s => 2189.6
+            ).toInt(), // 2189.6kbits/s => 2189.6
             double.tryParse(
                     temp['bitrate']?.replaceAll(RegExp('[a-z/]'), '')) ??
                 0.0,
