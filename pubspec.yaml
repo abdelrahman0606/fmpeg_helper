@@ -12,13 +12,10 @@ dependencies:
     sdk: flutter
   logging: ^1.3.0
   path_provider: ^2.1.5
-  dio: ^5.7.0
-  archive: ^4.0.2
-  ffmpeg_kit_flutter_min_gpl:
-    git:
-      url: https://github.com/freshcutgg/ffmpeg_kit_flutter_min_gpl.git
-      ref: 65753c136082438c99ebb70c3306b34848e0bfb2
-  package_info_plus: ^8.1.2
+  dio: ^5.8.0+1
+  archive: ^4.0.5
+  ffmpeg_kit_flutter_min_gpl: ^6.0.3
+  package_info_plus: ^8.3.0
 
 dev_dependencies:
   flutter_test:
