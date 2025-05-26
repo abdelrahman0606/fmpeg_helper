@@ -200,7 +200,7 @@ class FFMpegHelper {
             int.tryParse(temp['total_size']) ?? 0,
             // int.parse(
             //   temp['out_time_us'].toString(),
-            double.parse(
+            int.parse(
               temp['out_time_us'].toString(),
             ), // 2189.6kbits/s => 2189.6
             double.tryParse(

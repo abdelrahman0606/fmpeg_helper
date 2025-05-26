@@ -40,10 +40,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> runFFprobe() async {
-    MediaInformation? res = await ffmpeg.runProbe(selectedFile.path);
+    var res = await ffmpeg.runProbe(selectedFile.path);
     if (res != null) {
       print('${res.getBitrate()}');
-      for (StreamInformation stream in res.getStreams()) {
+      for (var stream in res.getStreams()) {
         print(
             "---------\n FFprobe result \n Bitrate: ${stream.getBitrate()} \n Height: ${stream.getHeight()} \n Width: ${stream.getWidth()} \n ------------------");
       }
@@ -129,8 +129,8 @@ class _HomePageState extends State<HomePage> {
     );
     File? session = await ffmpeg.runSync(
       cliCommand,
-      statisticsCallback: (Statistics statistics) {
-        print('bitrate: ${statistics.getBitrate()}');
+      statisticsCallback: (statistics) {
+        print('bitrate: ${statistics.getBitrateOrigin()}');
       },
     );
     print("success=========> ${session != null}");
