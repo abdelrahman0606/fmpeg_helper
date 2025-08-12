@@ -1,11 +1,12 @@
 import 'dart:io';
+
 import 'package:ffmpeg_helper/ffmpeg_helper.dart';
-import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:material_dialogs/widgets/buttons/icon_button.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
+import 'package:flutter/material.dart';
 import 'package:material_dialogs/material_dialogs.dart';
+import 'package:material_dialogs/widgets/buttons/icon_button.dart';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -39,10 +40,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> runFFprobe() async {
-    MediaInformation? res = await ffmpeg.runProbe(selectedFile.path);
+    var res = await ffmpeg.runProbe(selectedFile.path);
     if (res != null) {
       print('${res.getBitrate()}');
-      for (StreamInformation stream in res.getStreams()) {
+      for (var stream in res.getStreams()) {
         print(
             "---------\n FFprobe result \n Bitrate: ${stream.getBitrate()} \n Height: ${stream.getHeight()} \n Width: ${stream.getWidth()} \n ------------------");
       }
@@ -128,8 +129,8 @@ class _HomePageState extends State<HomePage> {
     );
     File? session = await ffmpeg.runSync(
       cliCommand,
-      statisticsCallback: (Statistics statistics) {
-        print('bitrate: ${statistics.getBitrate()}');
+      statisticsCallback: (statistics) {
+        print('bitrate: ${statistics.getBitrateOrigin()}');
       },
     );
     print("success=========> ${session != null}");
